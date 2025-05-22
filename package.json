@@ -16,6 +16,7 @@
     "uuid": "^11.1.0"
   },
   "scripts": {
-    "start": "yarn nodemon server.js"
+    "start": "yarn nodemon server.js",
+    "seed": "node seeds/concert.seed.js"
   }
 }

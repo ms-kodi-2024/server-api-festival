@@ -1,4 +1,5 @@
 To run the application:
+yarn seed
 yarn start
 
 Link to production version on Vercel:
