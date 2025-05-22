@@ -25,26 +25,30 @@ db.once('open', () => {
 });
 db.on('error', err => console.log('Error ' + err));
 
-const server = app.listen(process.env.PORT || 8000, () => {
-  console.log('Server is running on port: 8000');
-});
-const io = socketIo(server);
+let server = null;
+if (require.main === module) {
+  server = app.listen(process.env.PORT || 8000, () => {
+    console.log('Server is running on port: 8000');
+  });
 
-io.on('connection', async (socket) => {
-  console.log('New socket!');
-  const Seat = require('./models/seat.model');
-  try {
-    const seats = await Seat.find();
-    socket.emit('seatsUpdated', seats);
-  } catch (error) {
-    console.log('Error retrieving seats: ' + error.message);
-  }
-});
+  const io = socketIo(server);
 
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
+  io.on('connection', async (socket) => {
+    console.log('New socket!');
+    const Seat = require('./models/seat.model');
+    try {
+      const seats = await Seat.find();
+      socket.emit('seatsUpdated', seats);
+    } catch (error) {
+      console.log('Error retrieving seats: ' + error.message);
+    }
+  });
+
+  app.use((req, res, next) => {
+    req.io = io;
+    next();
+  });
+}
 
 app.use('/api/testimonials', testimonialsRoutes);
 app.use('/api/concerts', concertsRoutes);
@@ -57,3 +61,5 @@ app.get('*', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ message: 'Not found...' });
 });
+
+module.exports = app;

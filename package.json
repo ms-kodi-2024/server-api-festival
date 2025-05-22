@@ -5,7 +5,11 @@
   "author": "ms-kodi-2024",
   "license": "MIT",
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "chai": "4.2.0",
+    "chai-http": "4.3.0",
+    "mocha": "6.2.1",
+    "nodemon": "^3.1.9",
+    "onchange": "6.1.0"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -17,6 +21,8 @@
   },
   "scripts": {
     "start": "yarn nodemon server.js",
-    "seed": "node seeds/concert.seed.js"
+    "seed": "node seeds/concert.seed.js",
+    "test": "mocha \"./{,!(node_modules|client)/**/}*.test.js\"",
+    "test:watch": "onchange \"./**/*.js\" -i -k -- yarn test"
   }
 }
