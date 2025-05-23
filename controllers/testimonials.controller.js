@@ -1,4 +1,14 @@
 const Testimonial = require('../models/testimonial.model');
+const sanitizeHtml = require('sanitize-html');
+
+const escape = (str) => {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
 
 const getAllTestimonials = async (req, res) => {
   try {
@@ -21,7 +31,16 @@ const getTestimonialById = async (req, res) => {
 
 const createTestimonial = async (req, res) => {
   try {
-    const newTestimonial = new Testimonial(req.body);
+    const { author, text } = req.body;
+
+    if (!author || !text) {
+      return res.status(400).send({ message: 'Missing required fields: author, text' });
+    }
+
+    const sanitizedAuthor = escape(sanitizeHtml(author));
+    const sanitizedText = escape(sanitizeHtml(text));
+
+    const newTestimonial = new Testimonial({ author: sanitizedAuthor, text: sanitizedText });
     const savedTestimonial = await newTestimonial.save();
     res.status(201).json(savedTestimonial);
   } catch (error) {
@@ -31,10 +50,18 @@ const createTestimonial = async (req, res) => {
 
 const updateTestimonial = async (req, res) => {
   try {
+    const { author, text } = req.body;
+
+    if (!author || !text) {
+      return res.status(400).send({ message: 'Missing required fields: author, text' });
+    }
+
     const testimonial = await Testimonial.findById(req.params.id);
     if (!testimonial) return res.status(404).send({ message: 'Not found...' });
-    testimonial.author = req.body.author;
-    testimonial.text = req.body.text;
+
+    testimonial.author = escape(sanitizeHtml(author));
+    testimonial.text = escape(sanitizeHtml(text));
+
     const updatedTestimonial = await testimonial.save();
     res.json(updatedTestimonial);
   } catch (error) {
@@ -52,4 +79,10 @@ const deleteTestimonial = async (req, res) => {
   }
 };
 
-module.exports = { getAllTestimonials, getTestimonialById, createTestimonial, updateTestimonial, deleteTestimonial };
+module.exports = {
+  getAllTestimonials,
+  getTestimonialById,
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
+};

@@ -11,6 +11,8 @@
 
 ### 3. Sanitize input
 - Endpoint `POST /api/seats` uses `mongo-sanitize` to prevent NoSQL injection
+- Endpoint `POST /api/concerts` uses `sanitize-html` to strip unsafe HTML
+- Endpoint `POST /api/testimonials` uses `sanitize-html` to strip unsafe HTML
 
 ### 4. CORS restriction
 - CORS enabled with explicit configuration
@@ -27,6 +29,19 @@
 ### 7. Dependency check
 - Dependencies tested with `snyk`
 - No known security vulnerabilities detected
+
+## OWASP Top 10 coverage
+
+- Injection → `mongo-sanitize`, input validation
+- Broken Authentication → not applicable (no login system)
+- Sensitive Data Exposure → env variables and `.env.example`
+- Security Misconfigurations → Helmet, limited CORS, `.gitignore`
+- Cross-Site Scripting (XSS) → input escaping and sanitization
+- Insecure Deserialization → not relevant (no custom deserialization)
+- Insufficient Logging and Monitoring → not implemented
+- Broken Access Control → not applicable (no roles system)
+- XML External Entities (XXE) → not used (JSON only)
+- Use of vulnerable components → checked via Snyk
 
 ## Run instructions
 
@@ -61,23 +76,16 @@ DB_URI=your-remote-mongodb-connection-string
 
 To check your dependencies for known vulnerabilities:
 
-1. Install Snyk globally (if not already):
-```bash
-yarn global add snyk@1.235.0
-```
+1. Authenticate with your snyk.io account:
 
-2. Authenticate with your snyk.io account:
 ```bash
 npx snyk auth
 ```
 
-3. Run the test in the project folder:
+2. Run the test in the project folder:
+
 ```bash
 yarn snyk
 ```
 
-You can also use:
-```bash
-snyk test
-```
 to perform a full audit of the dependencies.

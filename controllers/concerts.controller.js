@@ -1,6 +1,15 @@
 const Concert = require('../models/concert.model');
 const sanitizeHtml = require('sanitize-html');
 
+const escape = (str) => {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 const validateConcertData = (data) => {
   const { performer, genre, price, day, image } = data;
 
@@ -16,19 +25,19 @@ const validateConcertData = (data) => {
     return 'Price must be a positive number';
   }
 
-  if (!Number.isInteger(day) || day < 1 || day > 31) {
+  if (!Number.isInteger(Number(day)) || day < 1 || day > 31) {
     return 'Day must be an integer between 1 and 31';
   }
 
-  return null; // all good
+  return null;
 };
 
 const sanitizeConcertData = (data) => ({
-  performer: sanitizeHtml(data.performer),
-  genre: sanitizeHtml(data.genre),
-  price: Number(data.price), // sanitized and casted to number
-  day: Number(data.day),     // sanitized and casted to number
-  image: sanitizeHtml(data.image),
+  performer: escape(sanitizeHtml(data.performer)),
+  genre: escape(sanitizeHtml(data.genre)),
+  price: Number(data.price),
+  day: Number(data.day),
+  image: escape(sanitizeHtml(data.image)),
 });
 
 const getAllConcerts = async (req, res) => {
