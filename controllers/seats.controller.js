@@ -1,4 +1,5 @@
 const Seat = require('../models/seat.model');
+const sanitize = require('mongo-sanitize');
 
 const getAllSeats = async (req, res) => {
   try {
@@ -21,15 +22,25 @@ const getSeatById = async (req, res) => {
 
 const createSeat = async (req, res) => {
   try {
-    const { day, seat, client, email } = req.body;
+    const cleanData = {
+      day: sanitize(req.body.day),
+      seat: sanitize(req.body.seat),
+      client: sanitize(req.body.client),
+      email: sanitize(req.body.email),
+    };
+
+    const { day, seat, client, email } = cleanData;
+
     if (!day || !seat || !client || !email) {
       return res.status(400).send({ message: 'Missing required fields: day, seat, client, email' });
     }
+
     const existing = await Seat.findOne({ day, seat });
     if (existing) {
-      return res.status(409).send({ message: "The slot is already taken..." });
+      return res.status(409).send({ message: 'The slot is already taken...' });
     }
-    const newSeat = new Seat(req.body);
+
+    const newSeat = new Seat(cleanData);
     const savedSeat = await newSeat.save();
     const allSeats = await Seat.find();
     req.io.emit('seatsUpdated', allSeats);
@@ -71,4 +82,10 @@ const deleteSeat = async (req, res) => {
   }
 };
 
-module.exports = { getAllSeats, getSeatById, createSeat, updateSeat, deleteSeat };
+module.exports = {
+  getAllSeats,
+  getSeatById,
+  createSeat,
+  updateSeat,
+  deleteSeat,
+};

@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const socketIo = require('socket.io');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
 
 const testimonialsRoutes = require('./routes/testimonials.routes');
 const concertsRoutes = require('./routes/concerts.routes');
@@ -10,6 +11,7 @@ const seatsRoutes = require('./routes/seats.routes');
 
 const app = express();
 
+app.use(helmet());
 app.use(cors({
   origin: '*',
   methods: 'GET,POST,PUT,DELETE'
@@ -18,7 +20,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '/client/build')));
 
-mongoose.connect('mongodb+srv://mstalmach:zf9QoZv3r64pObkM@cluster0.amwpric.mongodb.net/NewWaveDB?retryWrites=true&w=majority&appName=Cluster0');
+require('dotenv').config();
+mongoose.connect(process.env.DB_URI);
 const db = mongoose.connection;
 db.once('open', () => {
   console.log('Connected to the database');
@@ -27,8 +30,8 @@ db.on('error', err => console.log('Error ' + err));
 
 let server = null;
 if (require.main === module) {
-  server = app.listen(process.env.PORT || 8000, () => {
-    console.log('Server is running on port: 8000');
+  server = app.listen(process.env.PORT, () => {
+    console.log('Server is running on port: ' + process.env.PORT);
   });
 
   const io = socketIo(server);
