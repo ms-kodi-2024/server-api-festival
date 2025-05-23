@@ -1,5 +1,14 @@
 const Seat = require('../models/seat.model');
-const sanitize = require('mongo-sanitize');
+const mongoSanitize = require('mongo-sanitize');
+
+const escape = (html) => {
+  return html
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
 
 const getAllSeats = async (req, res) => {
   try {
@@ -22,25 +31,24 @@ const getSeatById = async (req, res) => {
 
 const createSeat = async (req, res) => {
   try {
-    const cleanData = {
-      day: sanitize(req.body.day),
-      seat: sanitize(req.body.seat),
-      client: sanitize(req.body.client),
-      email: sanitize(req.body.email),
-    };
-
-    const { day, seat, client, email } = cleanData;
-
+    const { day, seat, client, email } = req.body;
     if (!day || !seat || !client || !email) {
       return res.status(400).send({ message: 'Missing required fields: day, seat, client, email' });
     }
 
-    const existing = await Seat.findOne({ day, seat });
+    const sanitizedData = {
+      day: mongoSanitize(day),
+      seat: mongoSanitize(seat),
+      client: escape(mongoSanitize(client)),
+      email: escape(mongoSanitize(email)),
+    };
+
+    const existing = await Seat.findOne({ day: sanitizedData.day, seat: sanitizedData.seat });
     if (existing) {
-      return res.status(409).send({ message: 'The slot is already taken...' });
+      return res.status(409).send({ message: "The slot is already taken..." });
     }
 
-    const newSeat = new Seat(cleanData);
+    const newSeat = new Seat(sanitizedData);
     const savedSeat = await newSeat.save();
     const allSeats = await Seat.find();
     req.io.emit('seatsUpdated', allSeats);
@@ -56,12 +64,22 @@ const updateSeat = async (req, res) => {
     if (!day || !seatNumber || !client || !email) {
       return res.status(400).send({ message: 'Missing required fields: day, seat, client, email' });
     }
+
+    const sanitizedUpdate = {
+      day: mongoSanitize(day),
+      seat: mongoSanitize(seatNumber),
+      client: escape(mongoSanitize(client)),
+      email: escape(mongoSanitize(email)),
+    };
+
     const updatedSeat = await Seat.findOneAndUpdate(
       { _id: req.params.id },
-      { $set: { day, seat: seatNumber, client, email } },
+      { $set: sanitizedUpdate },
       { new: true }
     );
+
     if (!updatedSeat) return res.status(404).send({ message: 'Not found...' });
+
     const allSeats = await Seat.find();
     req.io.emit('seatsUpdated', allSeats);
     res.json(updatedSeat);
@@ -87,5 +105,5 @@ module.exports = {
   getSeatById,
   createSeat,
   updateSeat,
-  deleteSeat,
+  deleteSeat
 };
